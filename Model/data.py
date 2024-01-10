@@ -35,11 +35,22 @@ def get_self_supervised_data(dataset=constants.Dataset.LBS,
 
   ds_train = tfds.load(
       dataset.value, split=split, as_supervised=True)
-  ds_train = ds_train.shuffle(shuffle_buffer, reshuffle_each_iteration=True)
+  ds_train = split_channel(ds_train.shuffle(shuffle_buffer, reshuffle_each_iteration=True))
   ds_train = ds_train.map(
       _parse_example, num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
   return ds_train
+
+
+def split_channel(audio):
+    if audio.shape[1] != 2:
+        raise ValueError("not stereo.")
+
+    # 拆分左右声道
+    audio_l = audio[:, 0]  # 左声道
+    audio_r = audio[:, 1]  # 右声道
+
+    return audio_l, audio_r
 
 
 def get_downstream_dataset(dataset=constants.Dataset.VOXFORGE,
